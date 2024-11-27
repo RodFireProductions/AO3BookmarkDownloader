@@ -1,10 +1,22 @@
 ## AO3 Bookmark Downloader
 import you
 import AO3
+import os
+import string
+import time
 
-# Utils
+# Rate Limiting
+# This variable limits the download requests per minute.
+rate_limit = 20
+
+## Utils
+def delay_call():
+    delay = 60 / 20
+    time.sleep(delay)
+
+#
 def seriesid_from_url(url):
-    # A rewrite of AO3.utils.workid_from_url but for series
+    # A copy of AO3.utils.workid_from_url but for series
     split_url = url.split("/")
     try:
         index = split_url.index("series")
@@ -31,15 +43,16 @@ def start_session():
     else:
         print("Double check that you entered the correct username and password.")
 
+#
 def choose_file_type():
     while True:
-        type = input("What file type would you like?\nAZW3 [0]\nEPUD [1]\nHTML [2]\nMOBI [3]\nPDF [4]\nEnter a number: ")
+        type = input("What file type would you like?\nAZW3 [0]\nEPUB [1]\nHTML [2]\nMOBI [3]\nPDF  [4]\nEnter a number: ")
         match int(type):
             case 0:
                 file_type = "AZW3"
                 break
             case 1:
-                file_type = "EPUD"
+                file_type = "EPUB"
                 break
             case 2:
                 file_type = "HTML"
@@ -55,48 +68,71 @@ def choose_file_type():
 
     return file_type
 
+#
 def load_bookmarks():
     user = AO3.User(you.username)
     user.set_session(session)
+    user.reload()
 
     # Parsing bookmark pages
     print("\nLoading bookmarks...")
     works = []
     series = []
 
-    for page in range(1, you.pages+1):
+    for page in range(1, user._bookmarks_pages+1):
         session.refresh_auth_token()
-        html = user.request(f"https://archiveofourown.org/users/{you.username}/bookmarks?page={page}")
+        html = session.request(f"https://archiveofourown.org/users/{you.username}/bookmarks?page={page}")
         list = html.find("ol", {"class": "bookmark index group"})
 
         for li in list.find_all("li", {"role": "article"}):
             if li.h4 is not None:
-                # Distinguish between single works and series
                 for a in li.h4.find_all("a"):
+                    # Distinguish between single works and series
                     if a.attrs["href"].startswith("/works"):
                         works.append(AO3.common.get_work_from_banner(li))
-                        # print(AO3.common.get_work_from_banner(li))
 
                     elif a.attrs["href"].startswith("/series"):
                         seriesid = seriesid_from_url(a['href'])
-                        series.append(AO3.Series(seriesid))
-                        # print(AO3.Series(seriesid))
+                        new_s = AO3.Series(seriesid)
+                        new_s.set_session(session)
+                        new_s.reload()
+                        series.append({"title": new_s.name, "works": new_s.work_list})
 
     return {"works": works, "series": series}
 
-    # print(page.text)
+#
+def download(work, type, series=None):
+    work.set_session(session)
+    work.reload()
+    #
+    if series is not None:
+        file_path = "downloads/" + series.translate(str.maketrans('', '', string.punctuation))
+    else:
+        file_path = "downloads"
 
+    os.makedirs(file_path, exist_ok = True)
+    work.download_to_file(f"{file_path}/{work.title.translate(str.maketrans('', '', string.punctuation))}.{type.lower()}", filetype=type)
+
+#
 def downloading(file_type, ids):
     print(f"\nWorks: {len(ids["works"])}")
     print(f"Series: {len(ids["series"])}")
     print("File Type: " + file_type + "\n")
 
+    # Paste here
+
     # Works
     print("Downloading works...")
-
+    for work in ids["works"]:
+        delay_call()
+        download(work, file_type)
 
     # Series
     print("Downloading series...")
+    for series in ids["series"]:
+        for work in series["works"]:
+            delay_call()
+            download(work, file_type, series=series["title"])
 
 ## Starting Script ##
 start_session()
