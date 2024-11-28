@@ -5,7 +5,6 @@ If you're like me and have hundreds of bookmarks, the idea of downloading each
 individually is probably daunting.
 
 ## How To Use
-Prerequisites: Python 3.10+
 
 1. Install.
     - Install dependencies: `pip install ao3_api`
