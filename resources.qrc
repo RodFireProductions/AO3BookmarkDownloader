@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="images">
+    <file>resources/bg_darker.png</file>
+    <file>resources/bg_light.png</file>
+    <file>resources/bg_dark.png</file>
+  </qresource>
+</RCC>

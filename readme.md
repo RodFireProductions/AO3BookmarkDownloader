@@ -1,14 +1,17 @@
 # AO3 Bookmark Downloader
+
+**This branch is in development.**
+
 A script for bulk downloading all of your bookmarks on AO3.
 
 If you're like me and have hundreds of bookmarks, the idea of downloading each
 individually is probably daunting.
 
 ## How To Use
-Prerequisites: Python (Made using 3.12 / Errored in 3.10)
+Prerequisites: Python 3.13
 
 1. Install.
-    - Install dependencies: `pip install ao3_api`
+    - Install dependencies: `pip install -r requirements.txt`
     - Clone or download this repo.
 2. Configure your install in `you.py`.
     - You'll need to add your username and password to get authentication to
