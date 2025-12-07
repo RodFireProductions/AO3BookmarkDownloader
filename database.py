@@ -5,7 +5,7 @@ import os.path
 def createTables():
     DB.execute("""
         CREATE TABLE 'config' (
-        'folder' TEXT,
+        'folder' TEXT
         )
     """)
 
