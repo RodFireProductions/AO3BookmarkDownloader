@@ -1,12 +1,9 @@
-## AO3 Bookmark Downloader
-import you
+## Utils ##
 import AO3
 import os
 import string
 import time
 
-# Rate Limiting
-# This variable limits the download requests per minute.
 rate_limit = 20
 
 ## Utils
@@ -29,10 +26,10 @@ def seriesid_from_url(url):
     return
 
 ## Main Functions
-def start_session():
+def start_session(username, password):
     global session
-    session = AO3.Session(you.username, you.password)
-    print(AO3.User(you.username))
+    session = AO3.Session(username, password)
+    print(AO3.User(username))
     print(f"Bookmarks: {session.bookmarks}")
     # session.refresh_auth_token()
 
@@ -42,32 +39,7 @@ def start_session():
         downloading(choose_file_type(), load_bookmarks())
     else:
         print("Double check that you entered the correct username and password.")
-
-#
-def choose_file_type():
-    while True:
-        type = input("What file type would you like?\nAZW3 [0]\nEPUB [1]\nHTML [2]\nMOBI [3]\nPDF  [4]\nEnter a number: ")
-        match int(type):
-            case 0:
-                file_type = "AZW3"
-                break
-            case 1:
-                file_type = "EPUB"
-                break
-            case 2:
-                file_type = "HTML"
-                break
-            case 3:
-                file_type = "MOBI"
-                break
-            case 4:
-                file_type = "PDF"
-                break
-            case _:
-                print("Incorrect input.\n")
-
-    return file_type
-
+        
 #
 def load_bookmarks():
     user = AO3.User(you.username)

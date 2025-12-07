@@ -18,11 +18,10 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>AO3 Bookmark Downloader</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(201, 192, 182);
-background-image: url(:/images/resources/bg_dark.png);</string>
+   <string notr="true">background-color: rgb(201, 192, 182);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="font">
@@ -48,7 +47,6 @@ background-image: url(:/images/resources/bg_dark.png);</string>
     <property name="styleSheet">
      <string notr="true">background-color: rgb(54, 49, 42);
 color: rgb(221, 221, 221);
-background-image: url(:/images/resources/bg_darker.png);
 </string>
     </property>
     <property name="frameShape">
@@ -103,7 +101,6 @@ background-image: url(:/images/resources/bg_darker.png);
         <property name="styleSheet">
          <string notr="true">padding: 1px;
 background-color: rgb(255, 255, 255);
-background-image: url(:/images/resources/bg_light.png);
 border-radius: 5px;
 color: rgb(0, 0, 0);</string>
         </property>
@@ -123,7 +120,6 @@ color: rgb(0, 0, 0);</string>
         <property name="styleSheet">
          <string notr="true">padding: 1px;
 background-color: rgb(255, 255, 255);
-background-image: url(:/images/resources/bg_light.png);
 border-radius: 5px;
 color: rgb(0, 0, 0);</string>
         </property>
@@ -153,7 +149,6 @@ color: rgb(0, 0, 0);</string>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color: rgb(225, 220, 215);
-background-image: url(:/images/resources/bg_light.png);
 border-radius: 10px;</string>
     </property>
     <property name="frameShape">
@@ -208,7 +203,7 @@ padding: 5px;</string>
         </property>
         <item>
          <property name="text">
-          <string>AZW3</string>
+          <string>PDF</string>
          </property>
         </item>
         <item>
@@ -228,7 +223,7 @@ padding: 5px;</string>
         </item>
         <item>
          <property name="text">
-          <string>PDF</string>
+          <string>AZW3</string>
          </property>
         </item>
        </widget>
@@ -243,26 +238,6 @@ padding: 5px;</string>
         </property>
         <property name="text">
          <string>Download Location:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLineEdit" name="locationInput">
-        <property name="font">
-         <font>
-          <family>Comic Sans MS</family>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: 5px;
-background-color: rgb(255, 255, 255);
-background-image: url(:/images/resources/bg_light.png);
-border-radius: 10px;
-color: rgb(0, 0, 0);</string>
-        </property>
-        <property name="text">
-         <string>c:\Downloads</string>
         </property>
        </widget>
       </item>
@@ -312,6 +287,30 @@ color: rgb(0, 0, 0);</string>
         </item>
        </layout>
       </item>
+      <item row="1" column="1">
+       <widget class="QPushButton" name="folderButton">
+        <property name="font">
+         <font>
+          <family>Comic Sans MS</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border-radius: 50px;
+padding: 5px;</string>
+        </property>
+        <property name="text">
+         <string>Choose Folder</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
     <widget class="QProgressBar" name="progressBar">
@@ -344,9 +343,9 @@ border-radius: 0px;</string>
      <property name="geometry">
       <rect>
        <x>660</x>
-       <y>410</y>
+       <y>420</y>
        <width>91</width>
-       <height>41</height>
+       <height>31</height>
       </rect>
      </property>
      <property name="font">
@@ -404,7 +403,7 @@ border-radius: 0px;</string>
        <height>121</height>
       </rect>
      </property>
-     <layout class="QFormLayout" name="buttons">
+     <layout class="QFormLayout" name="options">
       <property name="horizontalSpacing">
        <number>45</number>
       </property>
@@ -460,7 +459,7 @@ padding: 10px;</string>
          </font>
         </property>
         <property name="text">
-         <string>Second:</string>
+         <string>Then:</string>
         </property>
        </widget>
       </item>
@@ -507,13 +506,97 @@ padding: 10px;</string>
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
     </widget>
-    <widget class="QTextBrowser" name="statusFrame">
+    <widget class="QWidget" name="horizontalLayoutWidget_2">
+     <property name="geometry">
+      <rect>
+       <x>430</x>
+       <y>380</y>
+       <width>291</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="controls">
+      <item>
+       <widget class="QPushButton" name="stopButton">
+        <property name="font">
+         <font>
+          <family>Comic Sans MS</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border-radius: 50px;
+padding: 2.5px;</string>
+        </property>
+        <property name="text">
+         <string>Stop</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pauseButton">
+        <property name="font">
+         <font>
+          <family>Comic Sans MS</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border-radius: 50px;
+padding: 2.5px;</string>
+        </property>
+        <property name="text">
+         <string>Pause</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="resumeButton">
+        <property name="font">
+         <font>
+          <family>Comic Sans MS</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border-radius: 50px;
+padding: 2.5px;</string>
+        </property>
+        <property name="text">
+         <string>Resume</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QLabel" name="statusText">
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>360</y>
+       <y>340</y>
        <width>391</width>
-       <height>81</height>
+       <height>101</height>
       </rect>
      </property>
      <property name="font">
@@ -522,16 +605,13 @@ padding: 10px;</string>
        <pointsize>12</pointsize>
       </font>
      </property>
-     <property name="html">
-      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Comic Sans MS'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Segoe UI';&quot;&gt;This can take a while!&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Segoe UI';&quot;&gt;Read some fics while you wait!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(0, 0, 127);</string>
+     </property>
+     <property name="text">
+      <string>Input your AO3 username and password!
+Pick your options!
+Then fetch!</string>
      </property>
     </widget>
    </widget>
@@ -539,8 +619,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <zorder>header</zorder>
   </widget>
  </widget>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
