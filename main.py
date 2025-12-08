@@ -11,7 +11,7 @@ rate_limit = 20
 
 ## Utils
 def delay_call():
-    delay = 60 / 20
+    delay = 60 / rate_limit
     time.sleep(delay)
 
 #
