@@ -12,28 +12,32 @@ def createTables():
     DB.execute("""
         CREATE TABLE 'downloaded' (
         'work' INTEGER,
-        'series' INTEGER
+        'series' INTEGER,
+        'work_title' TEXT,
+        'series_title' TEXT
         )
     """)
 
     DB.execute("""
         CREATE TABLE 'works' (
         'work' INTEGER,
+        'title' TEXT
         )
     """)
 
     DB.execute("""
         CREATE TABLE 'series' (
         'work' INTEGER,
-        'series' INTEGER
+        'series' INTEGER,
+        'title' TEXT
         )
     """)
 
-if __name__ == "__main__":
-    connect = sqlite3.connect("bookmarks.db")
-    DB = connect.cursor()
-    populated = DB.execute("SELECT name FROM sqlite_master")
+##
+connect = sqlite3.connect("bookmarks.db")
+DB = connect.cursor()
+populated = DB.execute("SELECT name FROM sqlite_master")
 
-    if populated.fetchone() == None:
-        createTables()
-    connect.close()
+if populated.fetchone() == None:
+    createTables()
+connect.close()

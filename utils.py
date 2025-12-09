@@ -3,17 +3,25 @@ import AO3
 import os
 import string
 import time
+import database as DB
 
 rate_limit = 20
 
-## Utils
+colors = {
+    "error": "#800001",
+    "status": "#00007F"
+}
+
+state = {
+    "paused": False
+}
+
 def delay_call():
-    delay = 60 / 20
+    delay = 60 / rate_limit
     time.sleep(delay)
 
-#
+# A copy of AO3.utils.workid_from_url but for series
 def seriesid_from_url(url):
-    # A copy of AO3.utils.workid_from_url but for series
     split_url = url.split("/")
     try:
         index = split_url.index("series")
@@ -25,52 +33,83 @@ def seriesid_from_url(url):
             return int(seriesid)
     return
 
-## Main Functions
-def start_session(username, password):
-    global session
-    session = AO3.Session(username, password)
-    print(AO3.User(username))
-    print(f"Bookmarks: {session.bookmarks}")
+# AO3.session is not throwing AO3.utils.LoginError properly,
+# so this is my workaround
+def checkAuthentication(session, settings):
     # session.refresh_auth_token()
-
-    # Confirming
-    correct = input("Is this infromation correct? (yes/no): ")
-    if (correct.lower() == "yes"):
-        downloading(choose_file_type(), load_bookmarks())
-    else:
-        print("Double check that you entered the correct username and password.")
-        
+    html = session.request(f"https://archiveofourown.org/users/{settings['username']}")
+    logged_in = html.find("body", {"class": "logged-in"})
+    logged_out = html.find("body", {"class": "logged-out"})
+    if logged_in == None:
+        raise AO3.utils.LoginError("Invalid username or password")
 #
-def load_bookmarks():
-    user = AO3.User(you.username)
+def startSession(app, options):
+    settings = options[0]
+    try:
+        session = AO3.Session(settings["username"], settings["password"])
+        checkAuthentication(session, settings)
+    except Exception as e:
+        if not rateLimited(app, e):
+            app.updateStatus("Authtentication error.\nCheck that your username and password are correct.", colors["error"])
+            print(e)
+        return False
+    app.updateStatus("Authenticated successfully!", colors["status"])
+    #load_bookmarks(app, settings, session)
+    # downloading(choose_file_type(), load_bookmarks())
+    return True
+
+#
+def rateLimited(app, exception):
+    # We are being rate-limited. Try again in a while or reduce the number of requests
+    #if "rate-limited" in exception:
+    if exception == AO3.utils.HTTPError:
+        app.updateStatus("Rate-limited :(\nTry again later.", colors["error"])
+        print("AAAA RATE LIMIT")
+        return True
+    else:
+        # TODO: make error log?
+        return False
+
+#
+def addToQueue(app, work, series=False, series_title=""):
+    print(f"{work}, {series}, {series_title}")
+
+#
+def load_bookmarks(app, settings, session):
+    user = AO3.User(settings["username"])
     user.set_session(session)
     user.reload()
 
-    # Parsing bookmark pages
-    print("\nLoading bookmarks...")
-    works = []
-    series = []
+    app.updateStatus("Fetching bookmarks...\nThis may take awhile...", colors["status"])
 
-    for page in range(1, user._bookmarks_pages+1):
-        session.refresh_auth_token()
-        html = session.request(f"https://archiveofourown.org/users/{you.username}/bookmarks?page={page}")
-        list = html.find("ol", {"class": "bookmark index group"})
+    try:
+        for page in range(1, user._bookmarks_pages+1):
+            session.refresh_auth_token()
+            html = session.request(f"https://archiveofourown.org/users/{settings['username']}/bookmarks?page={page}")
+            list = html.find("ol", {"class": "bookmark index group"})
 
-        for li in list.find_all("li", {"role": "article"}):
-            if li.h4 is not None:
-                for a in li.h4.find_all("a"):
-                    # Distinguish between single works and series
-                    if a.attrs["href"].startswith("/works"):
-                        works.append(AO3.common.get_work_from_banner(li))
+            for li in list.find_all("li", {"role": "article"}):
+                if li.h4 is not None:
+                    for a in li.h4.find_all("a"):
+                        # Distinguish between single works and series
+                        if a.attrs["href"].startswith("/works"):
+                            #works.append(AO3.common.get_work_from_banner(li))
+                            addToQueue(app, AO3.common.get_work_from_banner(li))
 
-                    elif a.attrs["href"].startswith("/series"):
-                        seriesid = seriesid_from_url(a['href'])
-                        new_s = AO3.Series(seriesid)
-                        new_s.set_session(session)
-                        new_s.reload()
-                        series.append({"title": new_s.name, "works": new_s.work_list})
+                        elif a.attrs["href"].startswith("/series"):
+                            seriesid = seriesid_from_url(a['href'])
+                            new_s = AO3.Series(seriesid)
+                            new_s.set_session(session)
+                            new_s.reload()
+                            #series.append({"title": new_s.name, "works": new_s.work_list})
+                            addToQueue(app, new_s.work_list, series=True, series_title=new_s.name)
 
-    return {"works": works, "series": series}
+        return True
+    except Exception as e:
+        if not rateLimited(app, e):
+            app.updateStatus("Something went wrong.", colors["error"])
+            print(e)
+        return False
 
 #
 def download(work, type, series=None):
@@ -91,8 +130,6 @@ def downloading(file_type, ids):
     print(f"Series: {len(ids["series"])}")
     print("File Type: " + file_type + "\n")
 
-    # Paste here
-
     # Works
     print("Downloading works...")
     for work in ids["works"]:
@@ -105,6 +142,3 @@ def downloading(file_type, ids):
         for work in series["works"]:
             delay_call()
             download(work, file_type, series=series["title"])
-
-## Starting Script ##
-start_session()
