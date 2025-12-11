@@ -6,9 +6,9 @@ import time
 import database as DB
 
 rate_limit = {
-    "short": 5,
-    "medium": 20,
-    "long": 30
+    "short": 2,
+    "medium": 10,
+    "long": 20
 }
 
 colors = {
@@ -99,12 +99,13 @@ def load_bookmarks(app, settings, session):
 
     try:
         for page in range(1, bookmarks_pages(session, settings['username'])+1):
-            delay_call("short")
+            delay_call("medium")
             session.refresh_auth_token()
             html = session.request(f"https://archiveofourown.org/users/{settings['username']}/bookmarks?page={page}")
             list = html.find("ol", {"class": "bookmark index group"})
 
             for li in list.find_all("li", {"role": "article"}):
+                delay_call("short")
                 if li.h4 is not None:
                     for a in li.h4.find_all("a"):
                         # Distinguish between single works and series
