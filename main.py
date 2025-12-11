@@ -1,7 +1,7 @@
 ## Main ##
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLineEdit, QListWidgetItem
-from PyQt6.QtCore import QLine, QThread, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLineEdit, QListWidgetItem, QScrollBar
+from PyQt6.QtCore import QLine, QThread, pyqtSignal, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6 import uic
 from tkinter import filedialog
@@ -39,6 +39,8 @@ class App(QMainWindow):
         # Misc
         self.ficScrollBar.setMaximum(self.ficList.count())
         self.ficScrollBar.sliderMoved.connect(self.ficList.setCurrentRow)
+        self.fics_in_list = {}
+        self.ficList.setVerticalScrollBarPolicy(Qt. ScrollBarPolicy.ScrollBarAlwaysOff)
 
         # Settings
         self.folder_path = ""
@@ -53,8 +55,10 @@ class App(QMainWindow):
     def openGitHub(self):
         webbrowser.open(github_link)
 
-    def addToFicList(self):
-        print("todo")
+    def addToFicList(self, id, text):
+        self.fics_in_list[id] = QListWidgetItem(text, self.ficList)
+        self.ficList.setCurrentRow(self.ficList.count())
+        self.ficScrollBar.setMaximum(self.ficList.count())
 
     def setDownloadFolder(self):
         self.folder_path = filedialog.askdirectory()

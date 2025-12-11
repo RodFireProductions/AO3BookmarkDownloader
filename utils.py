@@ -5,7 +5,11 @@ import string
 import time
 import database as DB
 
-rate_limit = 20
+rate_limit = {
+    "short": 5,
+    "medium": 20,
+    "long": 30
+}
 
 colors = {
     "error": "#800001",
@@ -16,8 +20,8 @@ state = {
     "paused": False
 }
 
-def delay_call():
-    delay = 60 / rate_limit
+def delay_call(length):
+    delay = 60 / rate_limit[length]
     time.sleep(delay)
 
 # A copy of AO3.utils.workid_from_url but for series
@@ -33,13 +37,27 @@ def seriesid_from_url(url):
             return int(seriesid)
     return
 
+# A workaround for AO3.User's cached_property _bookmarks_pages,
+# because the pagination ordered list no longer uses "title".
+def bookmarks_pages(session, username):
+    session.refresh_auth_token()
+    html = session.request(f"https://archiveofourown.org/users/{username}/bookmarks")
+    pages = html.find("ol", {"class": "pagination"})
+    if pages is None:
+        return 1
+    n = 1
+    for li in pages.findAll("li"):
+        text = li.getText()
+        if text.isdigit():
+            n = int(text)
+    return n
+
 # AO3.session is not throwing AO3.utils.LoginError properly,
 # so this is my workaround
 def checkAuthentication(session, settings):
     # session.refresh_auth_token()
     html = session.request(f"https://archiveofourown.org/users/{settings['username']}")
     logged_in = html.find("body", {"class": "logged-in"})
-    logged_out = html.find("body", {"class": "logged-out"})
     if logged_in == None:
         raise AO3.utils.LoginError("Invalid username or password")
 #
@@ -54,36 +72,34 @@ def startSession(app, options):
             print(e)
         return False
     app.updateStatus("Authenticated successfully!", colors["status"])
-    #load_bookmarks(app, settings, session)
+    load_bookmarks(app, settings, session)
     # downloading(choose_file_type(), load_bookmarks())
     return True
 
 #
 def rateLimited(app, exception):
-    # We are being rate-limited. Try again in a while or reduce the number of requests
-    #if "rate-limited" in exception:
     if exception == AO3.utils.HTTPError:
         app.updateStatus("Rate-limited :(\nTry again later.", colors["error"])
-        print("AAAA RATE LIMIT")
         return True
     else:
         # TODO: make error log?
         return False
 
 #
-def addToQueue(app, work, series=False, series_title=""):
-    print(f"{work}, {series}, {series_title}")
+def addToQueue(app, id, work, title, series=False):
+    print(f"{work}, {series}, {title}")
+    app.addToFicList(id, f"{id} | {title}")
 
 #
 def load_bookmarks(app, settings, session):
+    app.updateStatus("Fetching bookmarks...\nThis may take awhile...", colors["status"])
     user = AO3.User(settings["username"])
     user.set_session(session)
     user.reload()
 
-    app.updateStatus("Fetching bookmarks...\nThis may take awhile...", colors["status"])
-
     try:
-        for page in range(1, user._bookmarks_pages+1):
+        for page in range(1, bookmarks_pages(session, settings['username'])+1):
+            delay_call("short")
             session.refresh_auth_token()
             html = session.request(f"https://archiveofourown.org/users/{settings['username']}/bookmarks?page={page}")
             list = html.find("ol", {"class": "bookmark index group"})
@@ -93,16 +109,17 @@ def load_bookmarks(app, settings, session):
                     for a in li.h4.find_all("a"):
                         # Distinguish between single works and series
                         if a.attrs["href"].startswith("/works"):
+                            workid = AO3.utils.workid_from_url(a['href'])
+                            new_w = AO3.Work(workid, session=session)
                             #works.append(AO3.common.get_work_from_banner(li))
-                            addToQueue(app, AO3.common.get_work_from_banner(li))
+                            addToQueue(app, workid, new_w, new_w.title)
 
                         elif a.attrs["href"].startswith("/series"):
                             seriesid = seriesid_from_url(a['href'])
-                            new_s = AO3.Series(seriesid)
-                            new_s.set_session(session)
+                            new_s = AO3.Series(seriesid, session=session)
                             new_s.reload()
                             #series.append({"title": new_s.name, "works": new_s.work_list})
-                            addToQueue(app, new_s.work_list, series=True, series_title=new_s.name)
+                            addToQueue(app, seriesid, new_s, new_s.name, series=True)
 
         return True
     except Exception as e:
