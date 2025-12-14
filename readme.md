@@ -1,4 +1,5 @@
-# AO3 Bookmark Downloader
+# AO3 Bookmark Downloader (Outdated)
+
 A script for bulk downloading all of your bookmarks on AO3.
 
 If you're like me and have hundreds of bookmarks, the idea of downloading each
