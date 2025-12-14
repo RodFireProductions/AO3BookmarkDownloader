@@ -102,13 +102,11 @@ class App(QMainWindow):
 
     def fetchBookmarks(self):
         settings = self.getInputs()
-        # if settings["error"]:
-        #     self.updateStatus(f"Missing: {settings['missing']}", utils.colors["error"])
-        #     return
+         if settings["error"]:
+             self.updateStatus(f"Missing: {settings['missing']}", utils.colors["error"])
+             return
         self.updateStatus("Authenticating...", None)
         self.sessionThread = Thread(self, utils.startSession, settings)
-
-
 
 if __name__ == "__main__":
 
