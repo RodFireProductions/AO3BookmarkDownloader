@@ -1,138 +1,120 @@
-## AO3 Bookmark Downloader
-import you
-import AO3
-import os
-import string
-import time
+## Main ##
+import sys
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLineEdit, QListWidgetItem, QScrollBar
+from PyQt6.QtCore import QLine, QThread, pyqtSignal, Qt
+from PyQt6.QtGui import QIcon
+from PyQt6 import uic
+from tkinter import filedialog
+from typing import Any
+import webbrowser
+import utils
 
-# Rate Limiting
-# This variable limits the download requests per minute.
-rate_limit = 20
+github_link = "https://github.com/RodFireProductions/AO3BookmarkDownloader"
 
-## Utils
-def delay_call():
-    delay = 60 / rate_limit
-    time.sleep(delay)
+class Thread(QThread):
+    result = pyqtSignal(bool)
+    def __init__(self, app, method, *args):
+        super().__init__()
+        self.app = app
+        self.method = method
+        self.args = args
+        self.start()
 
-#
-def seriesid_from_url(url):
-    # A copy of AO3.utils.workid_from_url but for series
-    split_url = url.split("/")
+    def run(self):
+        res = self.method(self.app, self.args)
+        self.result.emit(res)
+
+class App(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("AO3 Bookmark Downloader")
+        self.setWindowIcon(QIcon("icon.ico"))
+        uic.loadUi("gui.ui", self)
+
+        ## Initial Set Up ##
+        # Auth
+        self.passwordInput.setEchoMode(QLineEdit.EchoMode.Password)
+        self.sessionThread = None
+
+        # Misc
+        self.ficScrollBar.setMaximum(self.ficList.count())
+        self.ficScrollBar.sliderMoved.connect(self.ficList.setCurrentRow)
+        self.fics_in_list = {}
+        self.ficList.setVerticalScrollBarPolicy(Qt. ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        # Settings
+        self.folder_path = ""
+        self.folderButton.clicked.connect(self.setDownloadFolder)
+        self.usernameInput.setPlaceholderText("Username")
+        self.passwordInput.setPlaceholderText("Password")
+
+        # Buttons
+        self.fetchButton.clicked.connect(self.fetchBookmarks)
+        self.githubLink.clicked.connect(self.openGitHub)
+
+    def openGitHub(self):
+        webbrowser.open(github_link)
+
+    def addToFicList(self, id, text):
+        self.fics_in_list[id] = QListWidgetItem(text, self.ficList)
+        self.ficList.setCurrentRow(self.ficList.count())
+        self.ficScrollBar.setMaximum(self.ficList.count())
+
+    def setDownloadFolder(self):
+        self.folder_path = filedialog.askdirectory()
+
+    def updateStatus(self, message, color):
+        self.statusText.setText(message)
+        if color == None:
+            color = utils.colors["status"]
+        self.statusText.setStyleSheet(f"color: {color}")
+
+    def getInputs(self):
+        input = { "missing": [], "error": False }
+        input["file_type"] = self.fileType.currentText()
+
+        if self.folder_path != "":
+            input["folder"] = self.folder_path
+        else:
+            input["error"] = True
+            input["missing"].append("Download Location")
+
+        if self.allRadio.isChecked():
+            input["all"] = True
+        elif self.leftOffRadio.isChecked():
+            input["all"] = False
+        else:
+            input["error"] = True
+            input["missing"].append("Where to Start")
+
+        if self.usernameInput.text() == "":
+            input["error"] = True
+            input["missing"].append("Username")
+        else:
+            input["username"] = self.usernameInput.text()
+
+        if self.passwordInput.text() == "":
+            input["error"] = True
+            input["missing"].append("Password")
+        else:
+            input["password"] = self.passwordInput.text()
+        return input
+
+    def fetchBookmarks(self):
+        settings = self.getInputs()
+         if settings["error"]:
+             self.updateStatus(f"Missing: {settings['missing']}", utils.colors["error"])
+             return
+        self.updateStatus("Authenticating...", None)
+        self.sessionThread = Thread(self, utils.startSession, settings)
+
+if __name__ == "__main__":
+
+    app = QApplication(sys.argv)
+    window = App()
+    window.show()
+
     try:
-        index = split_url.index("series")
-    except ValueError:
-        return
-    if len(split_url) >= index+1:
-        seriesid = split_url[index+1].split("?")[0]
-        if seriesid.isdigit():
-            return int(seriesid)
-    return
-
-## Main Functions
-def start_session():
-    global session
-    session = AO3.Session(you.username, you.password)
-    print(AO3.User(you.username))
-    print(f"Bookmarks: {session.bookmarks}")
-    # session.refresh_auth_token()
-
-    # Confirming
-    correct = input("Is this infromation correct? (yes/no): ")
-    if (correct.lower() == "yes"):
-        downloading(choose_file_type(), load_bookmarks())
-    else:
-        print("Double check that you entered the correct username and password.")
-
-#
-def choose_file_type():
-    while True:
-        type = input("What file type would you like?\nAZW3 [0]\nEPUB [1]\nHTML [2]\nMOBI [3]\nPDF  [4]\nEnter a number: ")
-        match int(type):
-            case 0:
-                file_type = "AZW3"
-                break
-            case 1:
-                file_type = "EPUB"
-                break
-            case 2:
-                file_type = "HTML"
-                break
-            case 3:
-                file_type = "MOBI"
-                break
-            case 4:
-                file_type = "PDF"
-                break
-            case _:
-                print("Incorrect input.\n")
-
-    return file_type
-
-#
-def load_bookmarks():
-    user = AO3.User(you.username)
-    user.set_session(session)
-    user.reload()
-
-    # Parsing bookmark pages
-    print("\nLoading bookmarks...")
-    works = []
-    series = []
-
-    for page in range(1, user._bookmarks_pages+1):
-        session.refresh_auth_token()
-        html = session.request(f"https://archiveofourown.org/users/{you.username}/bookmarks?page={page}")
-        list = html.find("ol", {"class": "bookmark index group"})
-
-        for li in list.find_all("li", {"role": "article"}):
-            if li.h4 is not None:
-                for a in li.h4.find_all("a"):
-                    # Distinguish between single works and series
-                    if a.attrs["href"].startswith("/works"):
-                        works.append(AO3.common.get_work_from_banner(li))
-
-                    elif a.attrs["href"].startswith("/series"):
-                        seriesid = seriesid_from_url(a['href'])
-                        new_s = AO3.Series(seriesid)
-                        new_s.set_session(session)
-                        new_s.reload()
-                        series.append({"title": new_s.name, "works": new_s.work_list})
-
-    return {"works": works, "series": series}
-
-#
-def download(work, type, series=None):
-    work.set_session(session)
-    work.reload()
-    #
-    if series is not None:
-        file_path = "downloads/" + series.translate(str.maketrans('', '', string.punctuation))
-    else:
-        file_path = "downloads"
-
-    os.makedirs(file_path, exist_ok = True)
-    work.download_to_file(f"{file_path}/{work.title.translate(str.maketrans('', '', string.punctuation))}.{type.lower()}", filetype=type)
-
-#
-def downloading(file_type, ids):
-    print(f"\nWorks: {len(ids["works"])}")
-    print(f"Series: {len(ids["series"])}")
-    print("File Type: " + file_type + "\n")
-
-    # Paste here
-
-    # Works
-    print("Downloading works...")
-    for work in ids["works"]:
-        delay_call()
-        download(work, file_type)
-
-    # Series
-    print("Downloading series...")
-    for series in ids["series"]:
-        for work in series["works"]:
-            delay_call()
-            download(work, file_type, series=series["title"])
-
-## Starting Script ##
-start_session()
+        sys.exit(app.exec())
+    except SystemExit:
+        print("Closing app...")
