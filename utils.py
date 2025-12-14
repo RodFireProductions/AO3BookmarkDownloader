@@ -89,6 +89,10 @@ def rateLimited(app, exception):
 def addToQueue(app, id, work, title, series=False):
     print(f"{work}, {series}, {title}")
     app.addToFicList(id, f"{id} | {title}")
+    if series:
+        DB.insertSeries(id, title)
+    else:
+        DB.insertWork(id, title)
 
 #
 def load_bookmarks(app, settings, session):
@@ -96,6 +100,9 @@ def load_bookmarks(app, settings, session):
     user = AO3.User(settings["username"])
     user.set_session(session)
     user.reload()
+
+    # TODO: pull array of work and series IDs from database (if start where left off)
+    # Check the ID before adding to queue
 
     try:
         for page in range(1, bookmarks_pages(session, settings['username'])+1):
