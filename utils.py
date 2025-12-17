@@ -111,6 +111,8 @@ def load_bookmarks(app, settings, session):
             html = session.request(f"https://archiveofourown.org/users/{settings['username']}/bookmarks?page={page}")
             list = html.find("ol", {"class": "bookmark index group"})
 
+            print(f"https://archiveofourown.org/users/{settings['username']}/bookmarks?page={page}")
+
             for li in list.find_all("li", {"role": "article"}):
                 delay_call("short")
                 if li.h4 is not None:

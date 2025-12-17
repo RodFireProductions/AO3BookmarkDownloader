@@ -39,18 +39,21 @@ def insertWork(id, title):
     db = connectDB()
     db["cur"].executemany("INSERT INTO works VALUES(?, ?)", data)
     db["con"].commit()
+    db["con"].close()
 
 def insertSeries(id, title):
     data = [( id, title )]
     db = connectDB()
     db["cur"].executemany("INSERT INTO series VALUES(?, ?)", data)
     db["con"].commit()
+    db["con"].close()
 
 def insertDownloaded(w_id, s_id, w_title, s_title):
     data = [( w_id, s_id, w_title, s_title )]
     db = connectDB()
     db["cur"].executemany("INSERT INTO downloaded VALUES(?, ?, ?, ?)", data)
     db["con"].commit()
+    db["con"].close()
 
 ##
 def removeWork(id):
@@ -83,4 +86,5 @@ populated = DB.execute("SELECT name FROM sqlite_master")
 
 if populated.fetchone() == None:
     createTables()
+    connect.commit()
 connect.close()

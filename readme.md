@@ -7,6 +7,10 @@ A desktop app for bulk downloading all of your bookmarks from AO3.
 If you're like me and have hundreds of bookmarks, the idea of downloading each
 individually is probably daunting.
 
+## To Do:
+- Finish database integration
+- Redo download functions
+
 ## Development
 Coded with Python 3.13
 
